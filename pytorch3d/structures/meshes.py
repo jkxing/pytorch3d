@@ -1337,7 +1337,39 @@ class Meshes:
         """
         new_mesh = self.clone()
         return new_mesh.offset_verts_(vert_offsets_packed)
+    
+    def transform_verts(self, transform):
+        new_mesh = self.clone()
+        return new_mesh.transform_verts_(transform)
 
+    def transform_verts_(self, transform):
+        new_verts_list = []
+        verts_list = self.verts_list()
+        for i, old_verts in enumerate(verts_list):
+            if transform.shape[-1]==4:
+                multi = torch.matmul(transform,torch.transpose(torch.cat([old_verts,torch.ones((old_verts.shape[0],1),device=self.device)], dim=1),0,1))
+            else:
+                multi = torch.matmul(transform,torch.transpose(old_verts,0,1))
+            new_verts_list.append(torch.transpose(multi,0,1)[...,:3])
+        self._verts_list = new_verts_list
+        # update packed
+        if self._verts_packed is not None:
+            self._verts_packed = torch.cat(new_verts_list, dim=0)
+        # update padded
+        if self._verts_padded is not None:
+            for i, verts in enumerate(self._verts_list):
+                if len(verts) > 0:
+                    self._verts_padded[i, : verts.shape[0], :] = verts
+
+        # update face areas and normals
+        # only if the original attributes are computed
+        if any(
+            v is not None
+            for v in [self._faces_areas_packed, self._faces_normals_packed]
+        ):
+            self._compute_face_areas_normals(refresh=True)
+        return self
+    
     def scale_verts_(self, scale):
         """
         Multiply the vertices of this Meshes object by a scalar value.

@@ -78,11 +78,14 @@ def hard_rgb_blend(
     num_background_pixels = is_background.sum()
 
     # Set background color.
-    pixel_colors = colors[..., 0, :].masked_scatter(
-        is_background[..., None],
-        background_color[None, :].expand(num_background_pixels, -1),
-    )  # (N, H, W, 3)
-
+    #pixel_colors = colors[..., 0, :].masked_scatter(
+    #    is_background[..., None],
+    #    background_color[None, :].expand(num_background_pixels, -1),
+    #)  # (N, H, W, 3)
+    
+    pixel_colors = colors[..., 0, :]
+    pixel_colors[is_background[...]]=background_color[is_background[...]]
+    
     # Concat with the alpha channel.
     alpha = (~is_background).type_as(pixel_colors)[..., None]
 

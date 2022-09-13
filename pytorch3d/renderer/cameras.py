@@ -1669,7 +1669,7 @@ def look_at_rotation(
         if t.shape[-1] != 3:
             msg = "Expected arg %s to have shape (N, 3); got %r"
             raise ValueError(msg % (n, t.shape))
-    z_axis = F.normalize(at - camera_position, eps=1e-5)
+    z_axis = -F.normalize(at - camera_position, eps=1e-5)
     x_axis = F.normalize(torch.cross(up, z_axis, dim=1), eps=1e-5)
     y_axis = F.normalize(torch.cross(z_axis, x_axis, dim=1), eps=1e-5)
     is_close = torch.isclose(x_axis, torch.tensor(0.0), atol=5e-3).all(
